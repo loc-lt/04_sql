@@ -28,8 +28,8 @@ CREATE INDEX IF NOT EXISTS idx_category_parent_category_id
     ON category (parent_category_id);
 
 -- Transaction table indexes required by assignment
-CREATE INDEX IF NOT EXISTS idx_orders_seller_order_date
-    ON orders (seller_id, order_date);
+CREATE INDEX IF NOT EXISTS idx_orders_customer_order_date
+    ON orders (customer_id, order_date);
 
 CREATE INDEX IF NOT EXISTS idx_orders_total_amount
     ON orders (total_amount DESC);

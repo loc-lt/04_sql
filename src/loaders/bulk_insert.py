@@ -7,7 +7,7 @@ def insert_batch(cursor, orders_batch: list[tuple], order_items_batch: list[tupl
     execute_values(
         cursor,
         """
-        INSERT INTO orders (order_id, order_date, seller_id, status, total_amount, created_at)
+        INSERT INTO orders (order_id, customer_id, order_date, status, total_amount, created_at)
         VALUES %s
         """,
         orders_batch,

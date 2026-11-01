@@ -6,11 +6,18 @@ BENCHMARK_QUERIES = {
         ORDER BY 1
     """,
     "orders_by_seller_and_date": """
-        SELECT *
-        FROM orders
-        WHERE seller_id = 1
-          AND order_date >= '2025-10-01'
-          AND order_date < '2025-11-01'
+        SELECT DISTINCT o.order_id, o.order_date, o.customer_id, o.status, o.total_amount
+        FROM orders o
+        WHERE o.order_date >= '2025-05-01'
+          AND o.order_date < '2025-06-01'
+          AND EXISTS (
+              SELECT 1
+              FROM order_item oi
+              JOIN product p ON p.product_id = oi.product_id
+              WHERE oi.order_id = o.order_id
+                AND oi.order_date = o.order_date
+                AND p.seller_id = 1
+          )
     """,
     "order_item_by_product_id": """
         SELECT *
@@ -18,7 +25,7 @@ BENCHMARK_QUERIES = {
         WHERE product_id = 10
     """,
     "order_highest_total_amount": """
-        SELECT order_id, order_date, seller_id, total_amount
+        SELECT order_id, order_date, customer_id, total_amount
         FROM orders
         ORDER BY total_amount DESC
         LIMIT 1
@@ -30,12 +37,16 @@ BENCHMARK_QUERIES = {
         ORDER BY quantity_sold DESC
         LIMIT 20
     """,
-    "orders_by_seller_in_october": """
-        SELECT seller_id, COUNT(*) AS order_count
-        FROM orders
-        WHERE order_date >= '2025-10-01'
-          AND order_date < '2025-11-01'
-        GROUP BY seller_id
+    "orders_by_seller_in_may": """
+        SELECT p.seller_id, COUNT(DISTINCT (o.order_id, o.order_date)) AS order_count
+        FROM orders o
+        JOIN order_item oi
+          ON oi.order_id = o.order_id
+         AND oi.order_date = o.order_date
+        JOIN product p ON p.product_id = oi.product_id
+        WHERE o.order_date >= '2025-05-01'
+          AND o.order_date < '2025-06-01'
+        GROUP BY p.seller_id
         ORDER BY order_count DESC
     """,
     "revenue_per_product_per_month": """
@@ -45,12 +56,10 @@ BENCHMARK_QUERIES = {
         ORDER BY month, revenue DESC
     """,
     "products_sold_per_seller": """
-        SELECT o.seller_id, SUM(oi.quantity) AS products_sold
+        SELECT p.seller_id, SUM(oi.quantity) AS products_sold
         FROM order_item oi
-        JOIN orders o
-          ON o.order_id = oi.order_id
-         AND o.order_date = oi.order_date
-        GROUP BY o.seller_id
+        JOIN product p ON p.product_id = oi.product_id
+        GROUP BY p.seller_id
         ORDER BY products_sold DESC
     """,
 }

@@ -1,5 +1,5 @@
--- Run this AFTER creating indexes
--- Capture runtime + execution plan screenshots and compare with baseline
+-- Run this AFTER optimization indexes
+-- Capture runtime + execution plan screenshots
 
 EXPLAIN ANALYZE
 SELECT DATE_TRUNC('month', order_date)::DATE AS month, SUM(total_amount) AS total_revenue
@@ -8,11 +8,18 @@ GROUP BY 1
 ORDER BY 1;
 
 EXPLAIN ANALYZE
-SELECT *
-FROM orders
-WHERE seller_id = 1
-  AND order_date >= '2025-10-01'
-  AND order_date < '2025-11-01';
+SELECT DISTINCT o.order_id, o.order_date, o.customer_id, o.total_amount
+FROM orders o
+WHERE o.order_date >= '2025-05-01'
+  AND o.order_date < '2025-06-01'
+  AND EXISTS (
+      SELECT 1
+      FROM order_item oi
+      JOIN product p ON p.product_id = oi.product_id
+      WHERE oi.order_id = o.order_id
+        AND oi.order_date = o.order_date
+        AND p.seller_id = 1
+  );
 
 EXPLAIN ANALYZE
 SELECT *
@@ -20,7 +27,7 @@ FROM order_item
 WHERE product_id = 10;
 
 EXPLAIN ANALYZE
-SELECT order_id, order_date, seller_id, total_amount
+SELECT order_id, order_date, customer_id, total_amount
 FROM orders
 ORDER BY total_amount DESC
 LIMIT 1;
@@ -36,12 +43,16 @@ LIMIT 20;
 
 EXPLAIN ANALYZE
 SELECT
-    seller_id,
-    COUNT(*) AS order_count
-FROM orders
-WHERE order_date >= '2025-10-01'
-  AND order_date < '2025-11-01'
-GROUP BY seller_id
+    p.seller_id,
+    COUNT(DISTINCT (o.order_id, o.order_date)) AS order_count
+FROM orders o
+JOIN order_item oi
+  ON oi.order_id = o.order_id
+ AND oi.order_date = o.order_date
+JOIN product p ON p.product_id = oi.product_id
+WHERE o.order_date >= '2025-05-01'
+  AND o.order_date < '2025-06-01'
+GROUP BY p.seller_id
 ORDER BY order_count DESC;
 
 EXPLAIN ANALYZE
@@ -55,11 +66,9 @@ ORDER BY month, revenue DESC;
 
 EXPLAIN ANALYZE
 SELECT
-    o.seller_id,
+    p.seller_id,
     SUM(oi.quantity) AS products_sold
 FROM order_item oi
-JOIN orders o
-  ON o.order_id = oi.order_id
- AND o.order_date = oi.order_date
-GROUP BY o.seller_id
+JOIN product p ON p.product_id = oi.product_id
+GROUP BY p.seller_id
 ORDER BY products_sold DESC;

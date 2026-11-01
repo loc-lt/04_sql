@@ -1,18 +1,17 @@
--- KPI-02: price and discount behavior by category
+-- KPI-02: list price behavior by category
 
 SELECT
     category_name,
     COUNT(*) AS product_count,
-    MIN(discount_price) AS min_discount_price,
-    ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY discount_price)::numeric, 2) AS median_discount_price,
-    ROUND(AVG(discount_price), 2) AS avg_discount_price,
-    MAX(discount_price) AS max_discount_price,
-    ROUND(AVG(discount_pct), 2) AS avg_discount_pct
+    MIN(price) AS min_price,
+    ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY price)::numeric, 2) AS median_price,
+    ROUND(AVG(price), 2) AS avg_price,
+    MAX(price) AS max_price
 FROM vw_product_enriched
 GROUP BY category_name
-ORDER BY avg_discount_price DESC;
+ORDER BY avg_price DESC;
 
--- KPI-02b: top 10 products by effective discount percentage
+-- KPI-02b: top 10 products by list price
 SELECT
     product_id,
     product_name,
@@ -20,8 +19,7 @@ SELECT
     brand_name,
     seller_name,
     price,
-    discount_price,
-    discount_pct
+    active_promotion_links
 FROM vw_product_enriched
-ORDER BY discount_pct DESC, price DESC
+ORDER BY price DESC, product_id
 LIMIT 10;

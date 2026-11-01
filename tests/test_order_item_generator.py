@@ -18,35 +18,34 @@ class OrderItemGeneratorTest(unittest.TestCase):
         fake = Faker("en_US")
         fake.seed_instance(42)
 
-        seller_products = {
-            1: [
-                (101, Decimal("10.00")),
-                (102, Decimal("20.50")),
-                (103, Decimal("30.99")),
-                (104, Decimal("40.00")),
-            ]
-        }
+        products = [
+            (101, Decimal("10.00")),
+            (102, Decimal("20.50")),
+            (103, Decimal("30.99")),
+            (104, Decimal("40.00")),
+            (105, Decimal("50.00")),
+        ]
 
         orders, order_items = build_chunk(
             fake=fake,
             start_order_id=1,
             chunk_count=25,
-            seller_ids=[1],
-            seller_products=seller_products,
+            customer_ids=[1, 2, 3],
+            products=products,
         )
 
         self.assertEqual(len(orders), 25)
-        self.assertGreaterEqual(len(order_items), 25 * 3)
-        self.assertLessEqual(len(order_items), 25 * 4)
+        self.assertGreaterEqual(len(order_items), 25 * 2)
+        self.assertLessEqual(len(order_items), 25 * 5)
 
         for order in orders:
-            order_id, order_date, seller_id, _status, total_amount, _created_at = order
+            order_id, customer_id, order_date, _status, total_amount, _created_at = order
             items = [item for item in order_items if item[0] == order_id]
 
-            self.assertEqual(seller_id, 1)
+            self.assertIn(customer_id, (1, 2, 3))
             self.assertEqual(len(items), len({item[1] for item in items}))
-            self.assertGreaterEqual(len(items), 3)
-            self.assertLessEqual(len(items), 4)
+            self.assertGreaterEqual(len(items), 2)
+            self.assertLessEqual(len(items), 5)
             self.assertTrue(all(item[2] == order_date for item in items))
             self.assertEqual(total_amount, sum(item[5] for item in items))
 

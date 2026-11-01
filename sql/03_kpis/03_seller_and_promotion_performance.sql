@@ -5,7 +5,7 @@ SELECT
     seller_name,
     seller_type,
     COUNT(*) AS total_products,
-    ROUND(SUM(discount_price * stock_qty), 2) AS potential_catalog_gmv,
+    ROUND(SUM(price * stock_qty), 2) AS potential_catalog_gmv,
     ROUND(AVG(product_rating), 2) AS avg_product_rating
 FROM vw_product_enriched
 GROUP BY seller_id, seller_name, seller_type

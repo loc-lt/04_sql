@@ -10,11 +10,11 @@
 
 ## Data Generation
 
-- [ ] `orders` volume is between 2.5M and 3M.
-- [ ] Each order has 3-4 related order items.
-- [ ] Order dates fall within Aug-Oct 2025.
-- [ ] Order item products match the order seller.
-- [ ] No seller has fewer than 4 products with non-negative `discount_price`.
+- [ ] `orders` volume is **5,000,000** (or dry-run with `--allow-small-run` documented).
+- [ ] Each order has **2–5** related order items.
+- [ ] Order dates fall within **Jan–May 2025**.
+- [ ] `customer_id` references valid Project 03 customers.
+- [ ] `unit_price` matches `product.price` for generated lines.
 
 ## Data Quality
 
@@ -33,7 +33,7 @@
 ## Performance
 
 - [ ] Baseline query plans are captured.
-- [ ] Monthly partitions are created for `orders` and `order_item`.
+- [ ] Monthly partitions exist for **Jan–May 2025** on `orders` and `order_item`.
 - [ ] Required indexes are created successfully (including `order_item.product_id`).
 - [ ] Optimized query plans are captured and compared with baseline.
 - [ ] `poetry run python -m src.compare_benchmarks` output is copied into submission evidence.

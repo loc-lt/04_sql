@@ -14,7 +14,7 @@
 ## What to focus on
 
 - Integrity-first workflow: quality scripts run before KPI scripts.
-- Data generation logic: each order has 3-4 items and seller consistency is preserved.
+- Data generation logic: each order has 2-5 items; `customer_id` on orders; seller via `order_item` → `product`.
 - SQL readability: clear CTE naming, explicit joins, minimal ambiguity.
 - Business relevance: queries answer required optimization and report questions.
 - Performance basics: baseline vs optimized plan capture with partitions and indexes.
@@ -23,7 +23,7 @@
 ## Expected healthy signals
 
 - No FK violations and no invalid price logic.
-- No invalid order-item seller mismatches and no invalid totals.
+- No invalid totals; order line counts between 2 and 5.
 - KPI outputs show realistic distribution (not all zeros or null-heavy).
 - Benchmark comparison includes both runtime deltas and plan evidence.
 

@@ -5,9 +5,8 @@ Execute scripts in the following order:
 1. `sql/00_bootstrap/00_session_config.sql`
 2. `sql/00_bootstrap/01_prerequisites.sql`
 3. `sql/00_bootstrap/02_orders_schema_partitions.sql`
-4. Run Python Faker generator:
+4. Run Python Faker generator (seeds **both** `orders` and `order_item`):
    - `poetry run python -m src.generate_transactions --truncate-first`
-   - Backward-compatible alias: `poetry run python python/generate_orders_faker.py --truncate-first`
    - Optional dry run: `poetry run python -m src.generate_transactions --order-count 100000 --chunk-size 10000 --truncate-first --allow-small-run`
 5. `sql/00_bootstrap/03_generate_orders_data.sql` (post-load sanity checks)
 6. Baseline snapshot (runtime + execution plan):

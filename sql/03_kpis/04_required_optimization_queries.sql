@@ -8,18 +8,25 @@ FROM orders
 GROUP BY 1
 ORDER BY 1;
 
--- 2) Orders filtered by seller and date
+-- 2) Orders that include products from seller 1 in May 2025
 SELECT
-    order_id,
-    order_date,
-    seller_id,
-    status,
-    total_amount
-FROM orders
-WHERE seller_id = 1
-  AND order_date >= '2025-10-01'
-  AND order_date < '2025-11-01'
-ORDER BY order_date;
+    o.order_id,
+    o.order_date,
+    o.customer_id,
+    o.status,
+    o.total_amount
+FROM orders o
+WHERE o.order_date >= '2025-05-01'
+  AND o.order_date < '2025-06-01'
+  AND EXISTS (
+      SELECT 1
+      FROM order_item oi
+      JOIN product p ON p.product_id = oi.product_id
+      WHERE oi.order_id = o.order_id
+        AND oi.order_date = o.order_date
+        AND p.seller_id = 1
+  )
+ORDER BY o.order_date;
 
 -- 3) Filter order_item by product_id
 SELECT *
@@ -30,7 +37,7 @@ WHERE product_id = 10;
 SELECT
     order_id,
     order_date,
-    seller_id,
+    customer_id,
     total_amount
 FROM orders
 ORDER BY total_amount DESC
@@ -47,15 +54,19 @@ GROUP BY oi.product_id, p.product_name
 ORDER BY quantity_sold DESC
 LIMIT 20;
 
--- 6) Orders by seller in October
+-- 6) Distinct orders per seller in May 2025 (seller via line items)
 SELECT
-    seller_id,
-    COUNT(*) AS order_count,
-    ROUND(SUM(total_amount), 2) AS revenue
-FROM orders
-WHERE order_date >= '2025-10-01'
-  AND order_date < '2025-11-01'
-GROUP BY seller_id
+    p.seller_id,
+    COUNT(DISTINCT (o.order_id, o.order_date)) AS order_count,
+    ROUND(SUM(oi.subtotal), 2) AS revenue
+FROM orders o
+JOIN order_item oi
+  ON oi.order_id = o.order_id
+ AND oi.order_date = o.order_date
+JOIN product p ON p.product_id = oi.product_id
+WHERE o.order_date >= '2025-05-01'
+  AND o.order_date < '2025-06-01'
+GROUP BY p.seller_id
 ORDER BY order_count DESC;
 
 -- 7) Revenue per product per month
@@ -71,13 +82,11 @@ ORDER BY month, revenue DESC;
 
 -- 8) Products sold per seller
 SELECT
-    o.seller_id,
+    p.seller_id,
     s.seller_name,
     SUM(oi.quantity) AS products_sold
 FROM order_item oi
-JOIN orders o
-  ON o.order_id = oi.order_id
- AND o.order_date = oi.order_date
-JOIN seller s ON s.seller_id = o.seller_id
-GROUP BY o.seller_id, s.seller_name
+JOIN product p ON p.product_id = oi.product_id
+JOIN seller s ON s.seller_id = p.seller_id
+GROUP BY p.seller_id, s.seller_name
 ORDER BY products_sold DESC;

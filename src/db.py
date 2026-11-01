@@ -18,37 +18,33 @@ def ensure_directory(path: Path) -> None:
     path.mkdir(parents=True, exist_ok=True)
 
 
-def load_reference_data(engine: Engine) -> tuple[list[int], dict[int, list[tuple[int, Decimal]]]]:
+def load_reference_data(engine: Engine) -> tuple[list[int], list[tuple[int, Decimal]]]:
     with engine.connect() as connection:
-        seller_ids = [row[0] for row in connection.execute(text("SELECT seller_id FROM seller"))]
+        customer_ids = [
+            row[0] for row in connection.execute(text("SELECT customer_id FROM customer"))
+        ]
         product_rows = connection.execute(
             text(
                 """
-                SELECT seller_id, product_id, discount_price
+                SELECT product_id, price
                 FROM product
-                WHERE discount_price IS NOT NULL
-                  AND discount_price >= 0
-                ORDER BY seller_id, product_id
+                WHERE price > 0
+                  AND is_active IS TRUE
+                ORDER BY product_id
                 """
             )
         ).fetchall()
 
-    if not seller_ids:
-        raise ValueError("Project03 seller table is empty. Load Project03 reference data first.")
+    if not customer_ids:
+        raise ValueError("Project03 customer table is empty. Load Project03 reference data first.")
 
-    seller_products: dict[int, list[tuple[int, Decimal]]] = {seller_id: [] for seller_id in seller_ids}
-    for seller_id, product_id, discount_price in product_rows:
-        seller_products[seller_id].append((product_id, Decimal(discount_price)))
-
-    missing_sellers = [seller_id for seller_id, items in seller_products.items() if len(items) < 4]
-    if missing_sellers:
+    if len(product_rows) < 5:
         raise ValueError(
-            "Each seller must have >= 4 products with non-negative discount_price "
-            "because orders randomly contain 3-4 unique products. "
-            f"Missing sellers: {missing_sellers[:10]}"
+            "Need at least 5 active products with price > 0 to sample 2-5 unique line items per order."
         )
 
-    return seller_ids, seller_products
+    products = [(product_id, Decimal(price)) for product_id, price in product_rows]
+    return customer_ids, products
 
 
 def truncate_orders(raw_connection: Any) -> None:

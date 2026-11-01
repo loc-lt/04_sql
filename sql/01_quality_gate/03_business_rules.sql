@@ -1,13 +1,10 @@
 -- QG-03: business rule checks
 
--- Price and discount consistency
-SELECT COUNT(*) AS invalid_price_discount_rows
+-- Product price and rating
+SELECT COUNT(*) AS invalid_product_price_rows
 FROM product
-WHERE price < 0
-   OR discount_price < 0
-   OR discount_price > price;
+WHERE price <= 0;
 
--- Product rating range
 SELECT COUNT(*) AS invalid_product_rating_rows
 FROM product
 WHERE rating < 0
@@ -30,30 +27,20 @@ SELECT COUNT(*) AS invalid_promotion_date_rows
 FROM promotion
 WHERE end_date < start_date;
 
--- Order date range in requirement window
+-- Order date range in requirement window (Jan 1 - May 31, 2025)
 SELECT COUNT(*) AS invalid_order_date_range_rows
 FROM orders
-WHERE order_date < '2025-08-01'
-   OR order_date >= '2025-11-01';
+WHERE order_date < '2025-01-01'
+   OR order_date >= '2025-06-01';
 
--- Each order should have 3-4 line items
+-- Each order should have 2-5 line items
 SELECT COUNT(*) AS invalid_order_item_count_rows
 FROM (
     SELECT order_id, order_date, COUNT(*) AS item_count
     FROM order_item
     GROUP BY order_id, order_date
-    HAVING COUNT(*) NOT BETWEEN 3 AND 4
+    HAVING COUNT(*) NOT BETWEEN 2 AND 5
 ) bad_orders;
-
--- Seller consistency: order seller must equal product seller
-SELECT COUNT(*) AS seller_mismatch_rows
-FROM order_item oi
-JOIN orders o
-  ON o.order_id = oi.order_id
- AND o.order_date = oi.order_date
-JOIN product p
-  ON p.product_id = oi.product_id
-WHERE o.seller_id <> p.seller_id;
 
 -- Subtotal and total amount consistency
 SELECT COUNT(*) AS invalid_order_item_subtotal_rows

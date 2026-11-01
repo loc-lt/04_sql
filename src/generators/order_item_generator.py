@@ -28,8 +28,8 @@ def build_chunk(
     fake: Faker,
     start_order_id: int,
     chunk_count: int,
-    seller_ids: list[int],
-    seller_products: dict[int, list[tuple[int, Decimal]]],
+    customer_ids: list[int],
+    products: list[tuple[int, Decimal]],
 ) -> tuple[list[tuple], list[tuple]]:
     orders_batch: list[tuple] = []
     order_items_batch: list[tuple] = []
@@ -37,13 +37,12 @@ def build_chunk(
     for idx in range(chunk_count):
         order_id = start_order_id + idx
         order_date = random_datetime(fake)
-        seller_id = random.choice(seller_ids)
+        customer_id = random.choice(customer_ids)
         status = random.choices(STATUS_VALUES, weights=STATUS_WEIGHTS, k=1)[0]
         created_at = datetime.now(UTC).replace(tzinfo=None)
 
-        items_count = random.randint(3, 4)
-        product_pool = seller_products[seller_id]
-        selected_products = random.sample(product_pool, k=items_count)
+        items_count = random.randint(2, 5)
+        selected_products = random.sample(products, k=items_count)
 
         order_total = Decimal("0.00")
         for product_id, unit_price in selected_products:
@@ -55,7 +54,14 @@ def build_chunk(
             )
 
         orders_batch.append(
-            (order_id, order_date, seller_id, status, order_total.quantize(MONEY_QUANT), created_at)
+            (
+                order_id,
+                customer_id,
+                order_date,
+                status,
+                order_total.quantize(MONEY_QUANT),
+                created_at,
+            )
         )
 
     return orders_batch, order_items_batch

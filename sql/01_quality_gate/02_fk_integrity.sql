@@ -18,8 +18,8 @@ WHERE pr.promotion_id IS NULL
 
 SELECT COUNT(*) AS invalid_order_fk_rows
 FROM orders o
-LEFT JOIN seller s ON o.seller_id = s.seller_id
-WHERE s.seller_id IS NULL;
+LEFT JOIN customer c ON o.customer_id = c.customer_id
+WHERE c.customer_id IS NULL;
 
 SELECT COUNT(*) AS invalid_order_item_fk_rows
 FROM order_item oi

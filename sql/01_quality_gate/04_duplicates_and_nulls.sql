@@ -17,7 +17,6 @@ WHERE product_name IS NULL
    OR brand_id IS NULL
    OR seller_id IS NULL
    OR price IS NULL
-   OR discount_price IS NULL
    OR stock_qty IS NULL
    OR rating IS NULL
    OR created_at IS NULL
@@ -26,8 +25,8 @@ WHERE product_name IS NULL
 -- Nulls in mandatory order fields
 SELECT COUNT(*) AS null_mandatory_order_rows
 FROM orders
-WHERE order_date IS NULL
-   OR seller_id IS NULL
+WHERE customer_id IS NULL
+   OR order_date IS NULL
    OR status IS NULL
    OR total_amount IS NULL
    OR created_at IS NULL;

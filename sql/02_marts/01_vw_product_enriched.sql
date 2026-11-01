@@ -11,13 +11,17 @@ SELECT
     s.seller_name,
     s.seller_type,
     p.price,
-    p.discount_price,
-    ROUND((1 - p.discount_price / NULLIF(p.price, 0)) * 100, 2) AS discount_pct,
     p.stock_qty,
     p.rating AS product_rating,
     p.is_active,
-    p.created_at
+    p.created_at,
+    COALESCE(pp.promotion_count, 0) AS active_promotion_links
 FROM product p
 JOIN category c ON p.category_id = c.category_id
 JOIN brand b ON p.brand_id = b.brand_id
-JOIN seller s ON p.seller_id = s.seller_id;
+JOIN seller s ON p.seller_id = s.seller_id
+LEFT JOIN (
+    SELECT product_id, COUNT(*) AS promotion_count
+    FROM promotion_product
+    GROUP BY product_id
+) pp ON pp.product_id = p.product_id;

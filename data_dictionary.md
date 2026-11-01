@@ -24,6 +24,14 @@
 - `rating`: seller score from 0 to 5.
 - `country`: seller country.
 
+## `customer`
+
+- `customer_id`: primary key.
+- `customer_name`: customer display name.
+- `email`, `phone`: unique contact fields.
+- `gender`, `address`, `city`: profile attributes.
+- `created_at`: registration timestamp.
+
 ## `product`
 
 - `product_id`: primary key.
@@ -31,8 +39,7 @@
 - `category_id`: foreign key to `category`.
 - `brand_id`: foreign key to `brand`.
 - `seller_id`: foreign key to `seller`.
-- `price`: list price.
-- `discount_price`: effective discounted price.
+- `price`: list price (used as `unit_price` when generating orders).
 - `stock_qty`: available stock.
 - `rating`: product score from 0 to 5.
 - `created_at`: product creation timestamp.
@@ -40,23 +47,23 @@
 
 ## `orders`
 
-- `order_id`: primary key.
+- `order_id`: order identifier (partition key component).
+- `customer_id`: foreign key to `customer`.
 - `order_date`: order placement timestamp (partition key).
-- `seller_id`: foreign key to `seller`.
 - `status`: order status.
-- `total_amount`: order total, updated from related order items.
-- `created_at`: creation timestamp.
+- `total_amount`: sum of related line subtotals.
+- `created_at`: record creation timestamp.
 
 ## `order_item`
 
 - `order_item_id`: line item identifier.
 - `order_id`: foreign key to `orders`.
 - `product_id`: foreign key to `product`.
-- `order_date`: order date copied from parent order (partition key).
+- `order_date`: copied from parent order (partition key).
 - `quantity`: purchased quantity.
-- `unit_price`: effective unit price at purchase time.
+- `unit_price`: price per unit at purchase time.
 - `subtotal`: `quantity * unit_price`.
-- `created_at`: creation timestamp.
+- `created_at`: record creation timestamp.
 
 ## `promotion`
 

@@ -15,16 +15,17 @@ LANGUAGE sql
 AS $$
     SELECT
         DATE_TRUNC('month', oi.order_date)::DATE AS month,
-        COUNT(DISTINCT o.order_id) AS order_count,
+        COUNT(DISTINCT (o.order_id, o.order_date)) AS order_count,
         ROUND(SUM(oi.subtotal), 2) AS total_revenue,
         SUM(oi.quantity) AS total_quantity
     FROM orders o
     JOIN order_item oi
       ON oi.order_id = o.order_id
      AND oi.order_date = o.order_date
+    JOIN product p ON p.product_id = oi.product_id
     WHERE o.order_date >= p_start_date
       AND o.order_date < (p_end_date + INTERVAL '1 day')
-      AND (p_seller_id IS NULL OR o.seller_id = p_seller_id)
+      AND (p_seller_id IS NULL OR p.seller_id = p_seller_id)
     GROUP BY 1
     ORDER BY 1;
 $$;
@@ -44,16 +45,17 @@ LANGUAGE sql
 AS $$
     SELECT
         oi.order_date::DATE AS order_day,
-        COUNT(DISTINCT o.order_id) AS order_count,
+        COUNT(DISTINCT (o.order_id, o.order_date)) AS order_count,
         ROUND(SUM(oi.subtotal), 2) AS total_revenue,
         SUM(oi.quantity) AS total_quantity
     FROM orders o
     JOIN order_item oi
       ON oi.order_id = o.order_id
      AND oi.order_date = o.order_date
+    JOIN product p ON p.product_id = oi.product_id
     WHERE o.order_date >= p_start_date
       AND o.order_date < (p_end_date + INTERVAL '1 day')
-      AND (p_seller_id IS NULL OR o.seller_id = p_seller_id)
+      AND (p_seller_id IS NULL OR p.seller_id = p_seller_id)
     GROUP BY 1
     ORDER BY 1;
 $$;
@@ -73,20 +75,24 @@ RETURNS TABLE (
 LANGUAGE sql
 AS $$
     SELECT
-        o.seller_id,
+        p.seller_id,
         s.seller_name,
-        COUNT(DISTINCT o.order_id) AS order_count,
+        COUNT(DISTINCT (o.order_id, o.order_date)) AS order_count,
         ROUND(SUM(oi.subtotal), 2) AS total_revenue,
         SUM(oi.quantity) AS total_quantity,
-        ROUND(SUM(oi.subtotal) / NULLIF(COUNT(DISTINCT o.order_id), 0), 2) AS avg_order_value
+        ROUND(
+            SUM(oi.subtotal) / NULLIF(COUNT(DISTINCT (o.order_id, o.order_date)), 0),
+            2
+        ) AS avg_order_value
     FROM orders o
     JOIN order_item oi
       ON oi.order_id = o.order_id
      AND oi.order_date = o.order_date
-    JOIN seller s ON s.seller_id = o.seller_id
+    JOIN product p ON p.product_id = oi.product_id
+    JOIN seller s ON s.seller_id = p.seller_id
     WHERE o.order_date >= p_start_date
       AND o.order_date < (p_end_date + INTERVAL '1 day')
-    GROUP BY o.seller_id, s.seller_name
+    GROUP BY p.seller_id, s.seller_name
     ORDER BY total_revenue DESC;
 $$;
 
@@ -161,7 +167,17 @@ AS $$
         FROM orders o
         WHERE o.order_date >= p_start_date
           AND o.order_date < (p_end_date + INTERVAL '1 day')
-          AND (p_seller_id IS NULL OR o.seller_id = p_seller_id)
+          AND (
+              p_seller_id IS NULL
+              OR EXISTS (
+                  SELECT 1
+                  FROM order_item oi
+                  JOIN product p ON p.product_id = oi.product_id
+                  WHERE oi.order_id = o.order_id
+                    AND oi.order_date = o.order_date
+                    AND p.seller_id = p_seller_id
+              )
+          )
         GROUP BY o.status
     )
     SELECT
