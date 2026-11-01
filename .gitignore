@@ -5,3 +5,4 @@ __pycache__/
 .pytest_cache/
 output/benchmarks/*
 !output/benchmarks/.gitkeep
+docs/*
